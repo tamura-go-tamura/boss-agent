@@ -59,19 +59,42 @@ export interface BossResponse {
 
 // Assuming BossPersona and UserState are defined elsewhere (as per "既存定義")
 // If not, they should be defined here or imported. For example:
-//
-// export interface BossPersona {
-//   id: string;
-//   name: string;
-//   personalityTraits: string[]; // e.g., ["impatient", "micromanager", "supportive"]
-//   communicationStyle: string; // e.g., "direct", "passive-aggressive"
-//   // ... other relevant persona details
-// }
-//
-// export interface UserState {
-//   stressLevel: number; // e.g., 0-100
-//   confidenceLevel: number; // e.g., 0-100
-//   engagementLevel: number; // e.g., 0-100
-//   detectedEmotions?: string[]; // From Natural Language AI
-//   // ... other relevant user metrics
-// }
+
+export interface BossPersona {
+  id: string;
+  name: string;
+  description: string;
+  difficulty: '初級' | '中級' | '上級';
+  traits: readonly string[];
+  scenario_types: readonly string[];
+  communicationStyle: string;
+  personality?: string;
+  stressTriggers?: readonly string[];
+  preferredResponses?: readonly string[];
+}
+
+export interface UserState {
+  stressLevel: number; // 0-100
+  confidenceLevel: number; // 0-100
+  engagementLevel?: number; // 0-100
+  responseTime?: number; // milliseconds
+  textLength?: number;
+  formalityLevel?: number; // 0-100
+  detectedEmotions?: string[]; // From Natural Language AI
+}
+
+export interface GuidanceAction {
+  type: 'stress_management' | 'confidence_building' | 'professionalism' | 'response_time' | 'general';
+  message: string;
+  priority: 'low' | 'medium' | 'high';
+}
+
+export interface SessionAnalysis {
+  currentStressLevel: number;
+  currentConfidenceLevel: number;
+  averageStressLevel: number;
+  averageConfidenceLevel: number;
+  improvementAreas: string[];
+  strengths: string[];
+  sessionProgress: number;
+}
