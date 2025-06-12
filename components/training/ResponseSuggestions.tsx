@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Lightbulb, TrendingUp, Clock } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 
 interface ResponseSuggestion {
   text: string;
@@ -26,15 +26,9 @@ export function ResponseSuggestions({
 }: ResponseSuggestionsProps) {
   const [suggestions, setSuggestions] = useState<ResponseSuggestion[]>([]);
 
-  useEffect(() => {
-    if (isVisible && bossMessage) {
-      generateSuggestions();
-    }
-  }, [bossMessage, bossType, userStressLevel, isVisible]);
-
-  const generateSuggestions = () => {
+  const generateSuggestions = useCallback(() => {
     const messageType = analyzeBossMessage(bossMessage);
-    const baseSuggestions = getSuggestionsForType(messageType, bossType);
+    const baseSuggestions = getSuggestionsForType(messageType);
     
     // Adjust suggestions based on user stress level
     const adjustedSuggestions = baseSuggestions.map(suggestion => ({
@@ -43,7 +37,13 @@ export function ResponseSuggestions({
     }));
 
     setSuggestions(adjustedSuggestions);
-  };
+  }, [bossMessage, userStressLevel]);
+
+  useEffect(() => {
+    if (isVisible && bossMessage) {
+      generateSuggestions();
+    }
+  }, [bossMessage, bossType, userStressLevel, isVisible, generateSuggestions]);
 
   const analyzeBossMessage = (message: string): string => {
     const lowerMessage = message.toLowerCase();
@@ -57,7 +57,7 @@ export function ResponseSuggestions({
     return 'general';
   };
 
-  const getSuggestionsForType = (messageType: string, bossType: string): ResponseSuggestion[] => {
+  const getSuggestionsForType = (messageType: string): ResponseSuggestion[] => {
     const suggestions: Record<string, ResponseSuggestion[]> = {
       deadline: [
         {
@@ -227,7 +227,7 @@ export function ResponseSuggestions({
             </div>
             
             <p className="text-sm text-gray-800 mb-2 leading-relaxed">
-              "{suggestion.text}"
+              &quot;{suggestion.text}&quot;
             </p>
             
             <p className="text-xs text-gray-600 italic">

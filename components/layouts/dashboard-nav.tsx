@@ -8,7 +8,6 @@ import { createSupabaseClient } from '@/lib/supabase-client';
 import { 
   User, 
   LogOut, 
-  Settings, 
   BarChart3, 
   Brain, 
   Menu, 

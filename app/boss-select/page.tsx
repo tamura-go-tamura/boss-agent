@@ -11,20 +11,10 @@ import {
   Zap, 
   Shield, 
   Target, 
-  Clock, 
   PlayCircle,
   ArrowLeft,
   Settings
 } from 'lucide-react';
-
-interface BossPersona {
-  id: string;
-  name: string;
-  description: string;
-  difficulty: '初級' | '中級' | '上級';
-  traits: string[];
-  scenario_types: string[];
-}
 
 function BossSelectContent() {
   const router = useRouter();

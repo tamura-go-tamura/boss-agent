@@ -11,9 +11,9 @@ export const createSupabaseClient = () => {
 };
 
 // Server-side Supabase client
-export const createSupabaseServerClient = () => {
+export const createSupabaseServerClient = async () => {
   // Import cookies only when this function is called on the server
-  const { cookies } = require('next/headers');
+  const { cookies } = await import('next/headers');
   const cookieStore = cookies();
   return createServerComponentClient({ cookies: () => cookieStore });
 };

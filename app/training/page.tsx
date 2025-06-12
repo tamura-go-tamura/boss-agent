@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +15,6 @@ import { RealTimeAnalytics } from '@/components/training/RealTimeAnalytics';
 import { KeyboardShortcuts } from '@/components/training/KeyboardShortcuts';
 import {
   MessageCircle,
-  Clock,
   Send,
   RotateCcw,
   Pause,
@@ -24,8 +23,6 @@ import {
   ArrowLeft,
   Lightbulb,
   TrendingUp,
-  Target,
-  Timer,
   BarChart3,
   Keyboard,
   HelpCircle
@@ -78,7 +75,7 @@ function TrainingContent() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Function declarations
-  const endSession = async () => {
+  const endSession = useCallback(async () => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
@@ -107,9 +104,9 @@ function TrainingContent() {
     }
 
     router.push(`/results?session=${sessionId}&score=${score}`);
-  };
+  }, [messages, duration, timeRemaining, currentStressLevel, currentConfidenceLevel, sessionId, supabase, router]);
 
-  const updateAnalytics = (userInput: string, bossResponse: string) => {
+  const updateAnalytics = (userInput: string) => {
     const inputLength = userInput.length;
     const hasQuestionMarks = (userInput.match(/？/g) || []).length;
     const hasConfidentWords = /\b(絶対に|確実に|自信を持って|間違いなく|必ず|できます)\b/i.test(userInput);
@@ -142,7 +139,7 @@ function TrainingContent() {
     inputRef.current?.focus();
   };
 
-  const useQuickResponse = (response: string) => {
+  const handleQuickResponse = (response: string) => {
     setInputMessage(response);
     setShowQuickResponses(false);
     inputRef.current?.focus();
@@ -197,7 +194,7 @@ function TrainingContent() {
   useEffect(() => {
     document.addEventListener('keydown', handleKeyboardShortcut);
     return () => document.removeEventListener('keydown', handleKeyboardShortcut);
-  }, [sessionStarted, showQuickResponses, showAnalytics, showKeyboardHelp]);
+  }, [sessionStarted, showQuickResponses, showAnalytics, showKeyboardHelp, handleKeyboardShortcut]);
 
   useEffect(() => {
     if (sessionStarted && !isPaused && timeRemaining > 0) {
@@ -221,7 +218,7 @@ function TrainingContent() {
         clearInterval(timerRef.current);
       }
     };
-  }, [sessionStarted, isPaused, timeRemaining]);
+  }, [sessionStarted, isPaused, timeRemaining, endSession]);
 
   useEffect(() => {
     if (selectedBoss && selectedScenario) {
@@ -229,7 +226,7 @@ function TrainingContent() {
     }
   }, [selectedBoss, selectedScenario]);
 
-  const initializeSession = async () => {
+  const initializeSession = useCallback(async () => {
     if (!selectedBoss || !selectedScenario) return;
 
     try {
@@ -297,7 +294,7 @@ function TrainingContent() {
     } catch (error) {
       console.error('Error initializing session:', error);
     }
-  };
+  }, [selectedBoss, selectedScenario, stressLevel, duration, supabase, router]);
 
   const getInitialBossMessage = () => {
     if (!selectedBoss || !selectedScenario) return "Let's begin our conversation.";
@@ -324,7 +321,6 @@ function TrainingContent() {
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading || !sessionId) return;
 
-    const responseTime = responseTimeStart ? Date.now() - responseTimeStart : 0;
     setResponseTimeStart(null);
 
     const userMessage: Message = {
@@ -350,7 +346,7 @@ function TrainingContent() {
 
       setMessages(prev => [...prev, assistantMessage]);
       setLastBossMessage(assistantMessage.content);
-      updateAnalytics(userMessage.content, assistantMessage.content);
+      updateAnalytics(userMessage.content);
       setResponseTimeStart(Date.now());
     } catch (error) {
       console.error('Error sending message:', error);
@@ -582,7 +578,7 @@ function TrainingContent() {
                         variant="ghost"
                         size="sm"
                         className="justify-start text-left h-auto p-2"
-                        onClick={() => useQuickResponse(response)}
+                        onClick={() => handleQuickResponse(response)}
                       >
                         <span className="text-xs">{response}</span>
                       </Button>

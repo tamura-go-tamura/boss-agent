@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import Link from 'next/link';
 import { 
-  BarChart3, 
   TrendingUp, 
   Target, 
   Clock, 

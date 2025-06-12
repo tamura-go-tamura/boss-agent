@@ -109,7 +109,7 @@ export default async function DashboardPage() {
           Welcome back, {session.user.user_metadata?.full_name || 'Trainee'}!
         </h1>
         <p className="text-gray-600">
-          Ready to improve your boss communication skills? Let's continue your training journey.
+          Ready to improve your boss communication skills? Let&apos;s continue your training journey.
         </p>
       </div>
 
