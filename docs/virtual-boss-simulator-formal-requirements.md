@@ -99,9 +99,7 @@ AIマルチエージェントシステムを活用したリアルタイム上司
   "ai": [
     "Agent Development Kit (ADK)",
     "Gemini API in Vertex AI",
-    "Natural Language AI (GCP)",
-    "Vision AI (GCP, Phase 2)",
-    "Speech-to-Text (GCP, Phase 2)"
+    "Vision AI (GCP, Phase 2)"
   ]
 }
 ```

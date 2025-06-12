@@ -27,7 +27,7 @@ export interface ChatMessage {
   text: string;
   timestamp: string; // ISO 8601 date-time string
   // Optional fields for richer context
-  emotionAnalysis?: any; // Result from Natural Language AI for the user's message
+  sentimentAnalysis?: any; // Result from ADK sentiment analysis for the user's message
   responseTimeMs?: number; // User's response time for this message
 }
 

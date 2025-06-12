@@ -132,6 +132,18 @@ Chirp
 その他 Google Cloud AI サービス で利用したいものがあればお問い合わせください。
 Gemini API（Vertex AI の Gemini API の利用を推奨しますが、プロジェクトの要件に応じて Gemini API を直接利用することも可能です。）
 Gemma
+
+<!-- 
+🔵 本プロジェクトで実際に使用しているサービス:
+- Agent Development Kit (ADK) ⭐️ 
+- Gemini API in Vertex AI
+- Vision AI (Phase 2予定)
+
+🔴 本プロジェクトで使用していないサービス:
+- Speech-to-Text (音声機能削除により不要)
+- Natural Language AI (ADK中心の方針により不要)
+- Text-to-speech (音声機能削除により不要)
+-->
 【任意条件 (特別賞対象)】
 
 Flutter / Firebase の利用

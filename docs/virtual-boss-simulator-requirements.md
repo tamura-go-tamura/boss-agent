@@ -359,8 +359,6 @@ CREATE TABLE companies (
   "ai": [
     "Agent Development Kit",
     "Gemini API in Vertex AI",
-    "Speech-to-Text",
-    "Natural Language AI",
     "Vision AI"
   ]
 }
