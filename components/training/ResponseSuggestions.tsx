@@ -197,22 +197,22 @@ export function ResponseSuggestions({
   if (!isVisible || suggestions.length === 0) return null;
 
   return (
-    <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
-      <div className="flex items-center space-x-2 mb-3">
+    <div className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+      <div className="flex items-center space-x-2 mb-2">
         <Lightbulb className="h-4 w-4 text-blue-600" />
         <h4 className="text-sm font-medium text-blue-900">応答提案</h4>
         <Badge variant="secondary" className="text-xs">
-          ストレスレベル: {userStressLevel}%
+          ストレス: {userStressLevel}%
         </Badge>
       </div>
       
-      <div className="space-y-3">
+      <div className="space-y-2 max-h-48 overflow-y-auto">
         {suggestions.map((suggestion, index) => (
-          <div key={index} className="border rounded-lg p-3 bg-white hover:bg-gray-50 cursor-pointer transition-colors">
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm">{getTypeIcon(suggestion.type)}</span>
-                <Badge className={`text-xs ${getTypeColor(suggestion.type)}`}>
+          <div key={index} className="border rounded-md p-2 bg-white hover:bg-gray-50 cursor-pointer transition-colors">
+            <div className="flex items-start justify-between mb-1">
+              <div className="flex items-center space-x-1">
+                <span className="text-xs">{getTypeIcon(suggestion.type)}</span>
+                <Badge className={`text-xs py-0 px-1 ${getTypeColor(suggestion.type)}`}>
                   {getTypeLabel(suggestion.type)}
                 </Badge>
               </div>
@@ -220,13 +220,13 @@ export function ResponseSuggestions({
                 variant="ghost"
                 size="sm"
                 onClick={() => onSuggestionSelect(suggestion.text)}
-                className="text-xs"
+                className="text-xs h-6 px-2"
               >
-                使用する
+                使用
               </Button>
             </div>
             
-            <p className="text-sm text-gray-800 mb-2 leading-relaxed">
+            <p className="text-xs text-gray-800 mb-1 leading-relaxed">
               &quot;{suggestion.text}&quot;
             </p>
             
@@ -237,9 +237,9 @@ export function ResponseSuggestions({
         ))}
       </div>
       
-      <div className="mt-3 pt-3 border-t border-blue-200">
+      <div className="mt-2 pt-2 border-t border-blue-200">
         <p className="text-xs text-blue-700">
-          💡 Tip: Choose responses that match your communication style and the situation context.
+          💡 状況に適した応答を選択してください
         </p>
       </div>
     </div>

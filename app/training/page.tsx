@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { BOSS_PERSONAS, SCENARIOS, QUICK_RESPONSES } from '@/constants';
+import { BOSS_PERSONAS, SCENARIOS } from '@/constants';
 import { createSupabaseClient } from '@/lib/supabase-client';
 import { ResponseSuggestions } from '@/components/training/ResponseSuggestions';
 import { RealTimeAnalytics } from '@/components/training/RealTimeAnalytics';
@@ -140,13 +140,7 @@ function TrainingContent() {
 
   const handleSuggestionSelect = (suggestionText: string) => {
     setInputMessage(suggestionText);
-    setShowQuickResponses(false);
-    inputRef.current?.focus();
-  };
-
-  const handleQuickResponse = (response: string) => {
-    setInputMessage(response);
-    setShowQuickResponses(false);
+    // 提案選択後も表示を維持し、ユーザーが自由に編集・送信できるようにする
     inputRef.current?.focus();
   };
 
@@ -597,14 +591,12 @@ function TrainingContent() {
               </div>
             </CardHeader>
             
-            <CardContent className="flex-1 flex flex-col space-y-4 p-4 min-h-0 max-h-[calc(100vh-200px)] overflow-hidden">
+            <CardContent className="flex-1 flex flex-col p-4 min-h-0 max-h-[calc(100vh-200px)] overflow-hidden">
               {/* Messages */}
               <div 
-                className="overflow-y-auto space-y-3 p-3 bg-gradient-to-br from-slate-50 to-blue-50 rounded-lg border"
+                className="flex-1 overflow-y-auto space-y-3 p-3 bg-gradient-to-br from-slate-50 to-blue-50 rounded-lg border"
                 style={{
-                  height: 'calc(100vh - 400px)',
-                  minHeight: '300px',
-                  maxHeight: '60vh',
+                  minHeight: '250px',
                   scrollbarWidth: 'thin'
                 }}
               >
@@ -646,39 +638,23 @@ function TrainingContent() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Response Suggestions */}
-              {showQuickResponses && lastBossMessage && (
-                <ResponseSuggestions
-                  bossMessage={lastBossMessage}
-                  bossType={selectedBoss.id}
-                  userStressLevel={currentStressLevel}
-                  onSuggestionSelect={handleSuggestionSelect}
-                  isVisible={showQuickResponses && lastBossMessage !== ''}
-                />
-              )}
-
-              {/* Quick Responses */}
-              {showQuickResponses && (
-                <div className="p-3 bg-blue-50 rounded-lg flex-shrink-0">
-                  <h4 className="text-sm font-medium mb-2">クイック返答:</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    {QUICK_RESPONSES.slice(0, 4).map((response, index) => (
-                      <Button
-                        key={index}
-                        variant="ghost"
-                        size="sm"
-                        className="justify-start text-left h-auto p-2 text-xs"
-                        onClick={() => handleQuickResponse(response)}
-                      >
-                        {response}
-                      </Button>
-                    ))}
+              {/* Bottom Section: Suggestions + Input */}
+              <div className="flex-shrink-0 space-y-3">
+                {/* Response Suggestions */}
+                {showQuickResponses && lastBossMessage && (
+                  <div className="max-h-40 overflow-y-auto border rounded-lg">
+                    <ResponseSuggestions
+                      bossMessage={lastBossMessage}
+                      bossType={selectedBoss.id}
+                      userStressLevel={currentStressLevel}
+                      onSuggestionSelect={handleSuggestionSelect}
+                      isVisible={showQuickResponses && lastBossMessage !== ''}
+                    />
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Message Input */}
-              <div className="space-y-2 flex-shrink-0">
+                {/* Message Input - Always visible */}
+                <div className="space-y-2">
                 <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div className="flex items-center space-x-2">
@@ -751,6 +727,7 @@ function TrainingContent() {
                   >
                     <Send className="h-4 w-4" />
                   </Button>
+                </div>
                 </div>
               </div>
             </CardContent>
