@@ -13,6 +13,7 @@ import { createSupabaseClient } from '@/lib/supabase-client';
 import { ResponseSuggestions } from '@/components/training/ResponseSuggestions';
 import { RealTimeAnalytics } from '@/components/training/RealTimeAnalytics';
 import { KeyboardShortcuts } from '@/components/training/KeyboardShortcuts';
+import { BossEmotionalAnalyzer } from '@/components/training/BossEmotionalAnalyzer';
 import {
   MessageCircle,
   Send,
@@ -61,12 +62,16 @@ function TrainingContent() {
   const [showQuickResponses, setShowQuickResponses] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  const [showBossMood, setShowBossMood] = useState(true);
   
   // Real-time metrics
   const [currentStressLevel, setCurrentStressLevel] = useState(stressLevel * 10);
   const [currentConfidenceLevel, setCurrentConfidenceLevel] = useState(100 - stressLevel * 8);
   const [responseTimeStart, setResponseTimeStart] = useState<number | null>(null);
   const [lastBossMessage, setLastBossMessage] = useState<string>('');
+  const [lastUserMessage, setLastUserMessage] = useState<string>('');
+  const [currentBossEmotion, setCurrentBossEmotion] = useState<string>('落ち着き');
+  const [bossEmotionIntensity, setBossEmotionIntensity] = useState<number>(30);
   const [strengths, setStrengths] = useState<string[]>(['明確なコミュニケーション', 'プロフェッショナルな口調']);
   const [improvements, setImprovements] = useState<string[]>(['より具体的に説明する', 'フォローアップの質問をする']);
 
@@ -174,6 +179,12 @@ function TrainingContent() {
           setShowAnalytics(!showAnalytics);
         }
         break;
+      case 'm':
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          setShowBossMood(!showBossMood);
+        }
+        break;
       case ' ':
         if (!sessionStarted) {
           e.preventDefault();
@@ -194,7 +205,7 @@ function TrainingContent() {
   useEffect(() => {
     document.addEventListener('keydown', handleKeyboardShortcut);
     return () => document.removeEventListener('keydown', handleKeyboardShortcut);
-  }, [sessionStarted, showQuickResponses, showAnalytics, showKeyboardHelp, handleKeyboardShortcut]);
+  }, [sessionStarted, showQuickResponses, showAnalytics, showKeyboardHelp, showBossMood, handleKeyboardShortcut]);
 
   useEffect(() => {
     if (sessionStarted && !isPaused && timeRemaining > 0) {
@@ -331,6 +342,7 @@ function TrainingContent() {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    setLastUserMessage(inputMessage.trim());
     setInputMessage('');
     setIsLoading(true);
 
@@ -486,14 +498,72 @@ function TrainingContent() {
 
       {/* Keyboard Shortcuts Help */}
       {showKeyboardHelp && (
-        <KeyboardShortcuts onClose={() => setShowKeyboardHelp(false)} />
+        <div className="fixed inset-0 z-30">
+          <KeyboardShortcuts onClose={() => setShowKeyboardHelp(false)} />
+        </div>
       )}
 
-      {/* Main Content */}
-      <div className={`grid gap-4 ${showAnalytics ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1'}`}>
-        {/* Chat Interface */}
-        <div className={showAnalytics ? 'lg:col-span-2' : 'col-span-1'}>
-          <Card className="h-[600px] flex flex-col">
+      {/* Main Content - Single Screen Layout */}
+      <div className="grid grid-cols-12 gap-4 h-[calc(100vh-280px)]">
+        {/* Left Side - Boss Mood & Analytics */}
+        <div className="col-span-4 space-y-4 max-h-[calc(100vh-280px)] flex flex-col">
+          {/* Boss Emotional Analysis - Always Visible */}
+          {showBossMood && (
+            <div className="flex-shrink-0">
+              <BossEmotionalAnalyzer
+                bossType={selectedBoss?.id || 'supportive'}
+                stressLevel={currentStressLevel}
+                userConfidence={currentConfidenceLevel}
+                lastUserMessage={lastUserMessage}
+                lastBossMessage={lastBossMessage}
+                conversationTurn={messages.filter(m => m.role === 'user').length}
+                responseTime={responseTimeStart ? Date.now() - responseTimeStart : 0}
+                sessionDuration={duration * 60 - timeRemaining}
+              />
+            </div>
+          )}
+
+          {/* Analytics Panel - Scrollable */}
+          {showAnalytics && (
+            <div className="flex-1 overflow-y-auto">
+              <RealTimeAnalytics
+                stressLevel={currentStressLevel}
+                confidenceLevel={currentConfidenceLevel}
+                responseTime={responseTimeStart ? Date.now() - responseTimeStart : 0}
+                messageCount={messages.filter(m => m.role === 'user').length}
+                sessionDuration={duration * 60 - timeRemaining}
+                improvements={improvements}
+                strengths={strengths}
+              />
+            </div>
+          )}
+
+          {/* If both mood and analytics are hidden, show placeholder */}
+          {!showBossMood && !showAnalytics && (
+            <div className="flex-1">
+              <Card className="backdrop-blur-sm bg-white/90 border-0 shadow-lg h-full">
+                <CardContent className="p-6 text-center">
+                  <div className="text-gray-500">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-sm">分析パネルまたは上司の感情分析を有効にしてください</p>
+                    <div className="mt-4 space-x-2">
+                      <Button variant="outline" size="sm" onClick={() => setShowAnalytics(true)}>
+                        分析表示
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setShowBossMood(true)}>
+                        感情分析表示
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
+
+        {/* Right Side - Chat Interface */}
+        <div className="col-span-8">
+          <Card className="h-full max-h-[calc(100vh-280px)] flex flex-col backdrop-blur-sm bg-white/90 border-0 shadow-xl">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -511,29 +581,40 @@ function TrainingContent() {
                   >
                     <Lightbulb className="h-4 w-4" />
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowBossMood(!showBossMood)}
+                    className={`transition-all duration-200 ${
+                      showBossMood ? 'bg-purple-100 text-purple-700' : 'hover:bg-purple-50'
+                    }`}
+                    title="上司の感情分析"
+                  >
+                    🧠
+                  </Button>
                 </div>
               </div>
             </CardHeader>
             
-            <CardContent className="flex-1 flex flex-col space-y-4">
+            <CardContent className="flex-1 flex flex-col space-y-4 p-4 min-h-0">
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto space-y-4 p-4 bg-gray-50 rounded-lg">
+              <div className="flex-1 overflow-y-auto space-y-3 p-3 bg-gradient-to-br from-slate-50 to-blue-50 rounded-lg border min-h-0 max-h-[55vh]" style={{scrollbarWidth: 'thin'}}>
                 {messages.map((message) => (
                   <div
                     key={message.id}
                     className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                      className={`max-w-[75%] rounded-xl px-4 py-3 shadow-sm transition-all duration-200 hover:shadow-md ${
                         message.role === 'user'
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white'
                           : message.role === 'system'
-                          ? 'bg-gray-200 text-gray-800 text-sm'
-                          : 'bg-white border shadow-sm'
+                          ? 'bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 text-sm'
+                          : 'bg-white border border-slate-200 backdrop-blur-sm'
                       }`}
                     >
-                      <p className="text-sm">{message.content}</p>
-                      <p className="text-xs mt-1 opacity-70">
+                      <p className="text-sm leading-relaxed">{message.content}</p>
+                      <p className="text-xs mt-2 opacity-70">
                         {message.timestamp.toLocaleTimeString()}
                       </p>
                     </div>
@@ -541,14 +622,14 @@ function TrainingContent() {
                 ))}
                 {isLoading && (
                   <div className="flex justify-start">
-                    <div className="bg-white border shadow-sm rounded-lg px-4 py-2">
-                      <div className="flex items-center space-x-2">
+                    <div className="bg-white border border-slate-200 shadow-sm rounded-xl px-4 py-3 backdrop-blur-sm">
+                      <div className="flex items-center space-x-3">
                         <div className="animate-pulse flex space-x-1">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                         </div>
-                        <span className="text-xs text-gray-500">入力中...</span>
+                        <span className="text-xs text-slate-500">入力中...</span>
                       </div>
                     </div>
                   </div>
@@ -569,18 +650,18 @@ function TrainingContent() {
 
               {/* Quick Responses */}
               {showQuickResponses && (
-                <div className="p-3 bg-blue-50 rounded-lg">
+                <div className="p-3 bg-blue-50 rounded-lg flex-shrink-0">
                   <h4 className="text-sm font-medium mb-2">クイック返答:</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {QUICK_RESPONSES.slice(0, 6).map((response, index) => (
+                  <div className="grid grid-cols-2 gap-2">
+                    {QUICK_RESPONSES.slice(0, 4).map((response, index) => (
                       <Button
                         key={index}
                         variant="ghost"
                         size="sm"
-                        className="justify-start text-left h-auto p-2"
+                        className="justify-start text-left h-auto p-2 text-xs"
                         onClick={() => handleQuickResponse(response)}
                       >
-                        <span className="text-xs">{response}</span>
+                        {response}
                       </Button>
                     ))}
                   </div>
@@ -588,42 +669,41 @@ function TrainingContent() {
               )}
 
               {/* Message Input */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-4">
+              <div className="space-y-2 flex-shrink-0">
+                <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
                     <div className="flex items-center space-x-2">
                       <MessageCircle className="h-4 w-4 text-gray-600" />
                       <span className="text-sm font-medium">チャット訓練</span>
-                      <Badge variant="default">
-                        {messages.filter(m => m.role === 'user').length} メッセージ
+                      <Badge variant="default" className="text-xs">
+                        {messages.filter(m => m.role === 'user').length}
                       </Badge>
                     </div>
                     
                     <div className="flex items-center space-x-2">
                       <TrendingUp className="h-4 w-4 text-gray-600" />
-                      <span className="text-sm text-gray-600">パフォーマンス</span>
-                      <Badge variant="secondary">
+                      <Badge variant="secondary" className="text-xs">
                         {Math.round((currentConfidenceLevel + (100 - currentStressLevel)) / 2)}%
                       </Badge>
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowQuickResponses(!showQuickResponses)}
+                      className="h-8 w-8 p-0"
                     >
                       <Lightbulb className="h-4 w-4" />
-                      <span className="text-xs ml-1">提案</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowKeyboardHelp(!showKeyboardHelp)}
+                      className="h-8 w-8 p-0"
                     >
                       <Keyboard className="h-4 w-4" />
-                      <span className="text-xs ml-1">ショートカット</span>
                     </Button>
                   </div>
                 </div>
@@ -667,21 +747,6 @@ function TrainingContent() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Analytics Panel */}
-        {showAnalytics && (
-          <div className="lg:col-span-1">
-            <RealTimeAnalytics
-              stressLevel={currentStressLevel}
-              confidenceLevel={currentConfidenceLevel}
-              responseTime={responseTimeStart ? Date.now() - responseTimeStart : 0}
-              messageCount={messages.filter(m => m.role === 'user').length}
-              sessionDuration={duration * 60 - timeRemaining}
-              improvements={improvements}
-              strengths={strengths}
-            />
-          </div>
-        )}
       </div>
     </div>
   );
