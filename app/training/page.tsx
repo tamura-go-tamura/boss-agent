@@ -432,10 +432,11 @@ function TrainingContent() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-4">
+    <div className="min-h-screen flex flex-col">
+      <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col space-y-3 p-4">
       {/* Header */}
-      <Card>
-        <CardContent className="p-4">
+      <Card className="flex-shrink-0">
+        <CardContent className="p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button variant="ghost" size="sm" onClick={() => router.push('/boss-select')}>
@@ -504,9 +505,9 @@ function TrainingContent() {
       )}
 
       {/* Main Content - Single Screen Layout */}
-      <div className="grid grid-cols-12 gap-4 h-[calc(100vh-280px)]">
+      <div className="grid grid-cols-12 gap-4 flex-1 min-h-0">
         {/* Left Side - Boss Mood & Analytics */}
-        <div className="col-span-4 space-y-4 max-h-[calc(100vh-280px)] flex flex-col">
+        <div className="col-span-4 space-y-3 flex flex-col h-full min-h-0 max-h-[calc(100vh-200px)]">
           {/* Boss Emotional Analysis - Always Visible */}
           {showBossMood && (
             <div className="flex-shrink-0">
@@ -562,9 +563,9 @@ function TrainingContent() {
         </div>
 
         {/* Right Side - Chat Interface */}
-        <div className="col-span-8">
-          <Card className="h-full max-h-[calc(100vh-280px)] flex flex-col backdrop-blur-sm bg-white/90 border-0 shadow-xl">
-            <CardHeader className="pb-3">
+        <div className="col-span-8 h-full min-h-0">
+          <Card className="h-full flex flex-col backdrop-blur-sm bg-white/90 border-0 shadow-xl">
+            <CardHeader className="pb-3 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <MessageCircle className="h-5 w-5" />
@@ -596,9 +597,17 @@ function TrainingContent() {
               </div>
             </CardHeader>
             
-            <CardContent className="flex-1 flex flex-col space-y-4 p-4 min-h-0">
+            <CardContent className="flex-1 flex flex-col space-y-4 p-4 min-h-0 max-h-[calc(100vh-200px)] overflow-hidden">
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto space-y-3 p-3 bg-gradient-to-br from-slate-50 to-blue-50 rounded-lg border min-h-0 max-h-[55vh]" style={{scrollbarWidth: 'thin'}}>
+              <div 
+                className="overflow-y-auto space-y-3 p-3 bg-gradient-to-br from-slate-50 to-blue-50 rounded-lg border"
+                style={{
+                  height: 'calc(100vh - 400px)',
+                  minHeight: '300px',
+                  maxHeight: '60vh',
+                  scrollbarWidth: 'thin'
+                }}
+              >
                 {messages.map((message) => (
                   <div
                     key={message.id}
@@ -747,6 +756,7 @@ function TrainingContent() {
             </CardContent>
           </Card>
         </div>
+      </div>
       </div>
     </div>
   );
