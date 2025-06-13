@@ -47,8 +47,21 @@ class ADKBackendOrchestrator {
     
     // Convert context to ADK request format
     const request: ADKTrainingRequest = {
-      boss_persona: bossPersona,
-      user_state: userState,
+      boss_persona: {
+        id: bossPersona.id,
+        name: bossPersona.name,
+        description: bossPersona.description,
+        difficulty: bossPersona.difficulty,
+        stress_triggers: bossPersona.stressTriggers || [],
+        communication_style: bossPersona.communicationStyle || 'Professional',
+        avatar_url: bossPersona.avatarUrl || undefined
+      },
+      user_state: {
+        stress_level: this.mapStressLevel(userState.stressLevel),
+        confidence: userState.confidence,
+        engagement: userState.engagement,
+        last_response_quality: userState.lastResponseQuality || undefined
+      },
       user_message: userInput,
       context: this.buildContextString(context)
     };
@@ -61,10 +74,10 @@ class ADKBackendOrchestrator {
       bossResponse: adkResponse.boss_response.message,
       guidance: this.convertSuggestionsToGuidance(adkResponse.analysis.suggestions),
       analysis: {
-        currentStressLevel: adkResponse.updated_user_state.stressLevel,
-        currentConfidenceLevel: adkResponse.updated_user_state.confidenceLevel || 50,
+        currentStressLevel: this.mapBackStressLevel(adkResponse.updated_user_state.stress_level),
+        currentConfidenceLevel: adkResponse.updated_user_state.confidence,
         averageStressLevel: userState.stressLevel, // Use current as average for now
-        averageConfidenceLevel: userState.confidenceLevel || 50,
+        averageConfidenceLevel: userState.confidence,
         improvementAreas: adkResponse.analysis.improvement_areas,
         strengths: [], // ADK doesn't provide strengths yet
         sessionProgress: Math.min(100, context.conversationHistory.length * 10)
@@ -90,17 +103,17 @@ class ADKBackendOrchestrator {
     };
   }
 
-  private mapStressLevel(level: number): '低' | '中' | '高' {
-    if (level <= 30) return '低';
-    if (level <= 70) return '中';
-    return '高';
+  private mapStressLevel(level: number): 'LOW' | 'MEDIUM' | 'HIGH' {
+    if (level <= 30) return 'LOW';
+    if (level <= 70) return 'MEDIUM';
+    return 'HIGH';
   }
 
-  private mapBackStressLevel(level: '低' | '中' | '高'): number {
+  private mapBackStressLevel(level: 'LOW' | 'MEDIUM' | 'HIGH'): number {
     switch (level) {
-      case '低': return 20;
-      case '中': return 50;
-      case '高': return 80;
+      case 'LOW': return 20;
+      case 'MEDIUM': return 50;
+      case 'HIGH': return 80;
       default: return 50;
     }
   }
@@ -195,9 +208,9 @@ class ADKBackendOrchestrator {
   private generateFallbackAnalysis(context: SessionContext): SessionAnalysis {
     return {
       currentStressLevel: context.userState.stressLevel,
-      currentConfidenceLevel: context.userState.confidenceLevel || 50,
+      currentConfidenceLevel: context.userState.confidence,
       averageStressLevel: context.userState.stressLevel,
-      averageConfidenceLevel: context.userState.confidenceLevel || 50,
+      averageConfidenceLevel: context.userState.confidence,
       improvementAreas: ['Communication clarity', 'Confidence building'],
       strengths: ['Engagement', 'Willingness to practice'],
       sessionProgress: Math.min(100, context.conversationHistory.length * 15)

@@ -1,0 +1,19 @@
+{
+  "boss_persona": {
+    "id": "test_boss",
+    "name": "テスト田中部長",
+    "description": "厳しいが公正な上司。高い成果を期待する。",
+    "difficulty": 7,
+    "stress_triggers": ["遅刻", "準備不足", "曖昧な回答"],
+    "communication_style": "直接的で論理的",
+    "avatar_url": null
+  },
+  "user_state": {
+    "stress_level": "MEDIUM",
+    "confidence": 65,
+    "engagement": 80,
+    "last_response_quality": null
+  },
+  "user_message": "申し訳ございません、プロジェクトの進捗が予定より少し遅れています。詳細な対策を検討中です。",
+  "context": "月次進捗会議での報告"
+}
