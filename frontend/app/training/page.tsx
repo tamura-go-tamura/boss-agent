@@ -14,6 +14,13 @@ import { ResponseSuggestions } from '@/components/training/ResponseSuggestions';
 import { RealTimeAnalytics } from '@/components/training/RealTimeAnalytics';
 import { KeyboardShortcuts } from '@/components/training/KeyboardShortcuts';
 import { BossEmotionalAnalyzer } from '@/components/training/BossEmotionalAnalyzer';
+import { orchestrateAgents } from '@/services/adk/orchestrator';
+import type { 
+  SessionContext, 
+  OrchestrationResult, 
+  GuidanceAction,
+  ChatMessage
+} from '@/types/adk.types';
 import {
   MessageCircle,
   Send,
@@ -74,6 +81,10 @@ function TrainingContent() {
   const [bossEmotionIntensity, setBossEmotionIntensity] = useState<number>(30);
   const [strengths, setStrengths] = useState<string[]>(['明確なコミュニケーション', 'プロフェッショナルな口調']);
   const [improvements, setImprovements] = useState<string[]>(['より具体的に説明する', 'フォローアップの質問をする']);
+  
+  // ADK state
+  const [currentGuidance, setCurrentGuidance] = useState<GuidanceAction[]>([]);
+  const [sessionAnalysis, setSessionAnalysis] = useState<any>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -365,6 +376,51 @@ function TrainingContent() {
     if (!selectedBoss || !sessionId) return "I see.";
 
     try {
+      // Prepare session context for ADK
+      const conversationHistory: ChatMessage[] = messages
+        .filter(m => m.role !== 'system')
+        .map(m => ({ 
+          speaker: m.role === 'user' ? 'user' : 'boss',
+          text: m.content,
+          timestamp: m.timestamp.toISOString()
+        }));
+
+      const sessionContext: SessionContext = {
+        bossPersona: selectedBoss,
+        scenario: {
+          id: selectedScenario!.id,
+          title: selectedScenario!.title,
+          description: selectedScenario!.description,
+          difficulty: selectedScenario!.difficulty.toString()
+        },
+        userState: {
+          stressLevel: currentStressLevel,
+          confidenceLevel: currentConfidenceLevel,
+          responseTime: responseTimeStart ? Date.now() - responseTimeStart : 0
+        },
+        conversationHistory
+      };
+
+      // Use ADK orchestrator
+      const result = await orchestrateAgents(userInput, sessionContext);
+      
+      // Update UI with guidance and analysis from ADK
+      setCurrentGuidance(result.guidance);
+      setSessionAnalysis(result.analysis);
+      
+      // Update metrics based on ADK analysis
+      setCurrentStressLevel(result.analysis.currentStressLevel);
+      setCurrentConfidenceLevel(result.analysis.currentConfidenceLevel);
+      
+      // Update improvements and strengths
+      setImprovements(result.analysis.improvementAreas);
+      setStrengths(result.analysis.strengths);
+
+      return result.bossResponse;
+    } catch (error) {
+      console.error('Error with ADK orchestration:', error);
+      
+      // Fallback to simple Gemini response
       const { generateBossResponse } = await import('@/services/gcp/gemini');
       
       const conversationHistory = messages
@@ -381,19 +437,6 @@ function TrainingContent() {
       };
 
       return await generateBossResponse(userInput, selectedBoss, conversationHistory, userState);
-    } catch (error) {
-      console.error('Error generating AI response:', error);
-      
-      const fallbackResponses = {
-        supportive: "I appreciate your perspective. How can I help you with this?",
-        demanding: "I need more specifics. What's your action plan?",
-        micromanager: "Walk me through your process step by step.",
-        'passive-aggressive': "Interesting approach... if that's what you think is best.",
-        volatile: "This isn't acceptable! What are you going to do about it?",
-        analytical: "Show me the data that supports this conclusion."
-      };
-      
-      return fallbackResponses[selectedBoss.id as keyof typeof fallbackResponses] || "Please continue.";
     }
   };
 
